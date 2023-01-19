@@ -14,13 +14,10 @@ from config.train_option import parse_args
 from config.config import *
 import torchvision
 
-import cv2
-import random
-
 
 def get_dataset(name, image_set, transform):
     paths = {
-        "coco": ('/public/yzy/coco/2017', get_coco, 91),
+        "coco": ('/home/mjw/workspace/data/coco/2017', get_coco, 91),
         "coco_kp": ('/datasets01/COCO/022719', get_coco_kp, 2)
     }
     p, ds_fn, num_classes = paths[name]
@@ -64,8 +61,8 @@ def main():
             train_sampler, args.b, drop_last=True)
 
     data_loader = torch.utils.data.DataLoader(
-        dataset_test, batch_size=args.b,
-        sampler=test_sampler, num_workers=args.workers,
+        dataset, 
+        sampler=train_batch_sampler, num_workers=args.workers,
         collate_fn=utils.collate_fn
     )
     

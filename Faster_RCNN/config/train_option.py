@@ -3,14 +3,14 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description='Pytorch Faster-rcnn Training')
 
-    parser.add_argument('--data_path', default='/public/yzy/coco/2017/', help='dataset path')
+    parser.add_argument('--data_path', default='/home/mjw/workspace/data/coco/2017/', help='dataset path')
     parser.add_argument('--model', default='fasterrcnn_resnet50_fpn', help='model')
     parser.add_argument('--dataset', default='coco', help='dataset')
     parser.add_argument('--device', default='cuda', help='device')
     parser.add_argument('--b', '--batch_size', default=16, type=int)
-    parser.add_argument('--epochs', default=20, type=int, metavar='N',
+    parser.add_argument('--epochs', default=40, type=int, metavar='N',
                         help='number of total epochs to run')    
-    parser.add_argument('-j', '--workers', default=8, type=int, metavar='N',
+    parser.add_argument('-j', '--workers', default=20, type=int, metavar='N',
                         help='number of data loading workers (default: 16)')
     parser.add_argument('--lr', default=0.02, type=float, help='initial learning rate')
     parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
