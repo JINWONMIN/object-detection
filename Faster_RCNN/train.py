@@ -40,10 +40,10 @@ def main():
         utils.mkdir(args.output_dir)
     utils.init_distributed_mode(args)
 
-    # Data Loading
+    # Data loading
     print("Loading data")
     dataset, num_classes = get_dataset(args.dataset, "train", get_transform(train=True))
-    dataset_test, _ = get_dataset(args.dataset, "val", get_transform(train=False))
+    dataset_test, _ = get_dataset(args.dataset, "val", get_transform(train=False))    
 
     print("Creating data loaders")
     if args.distributed:
@@ -61,16 +61,13 @@ def main():
             train_sampler, args.b, drop_last=True)
 
     data_loader = torch.utils.data.DataLoader(
-        dataset, 
-        sampler=train_batch_sampler, num_workers=args.workers,
-        collate_fn=utils.collate_fn
-    )
-    
+        dataset, batch_sampler=train_batch_sampler, num_workers=args.workers,
+        collate_fn=utils.collate_fn)
+
     data_loader_test = torch.utils.data.DataLoader(
         dataset_test, batch_size=args.b,
         sampler=test_sampler, num_workers=args.workers,
-        collate_fn=utils.collate_fn
-    )
+        collate_fn=utils.collate_fn)
     
     # model creating
     print('Creating model')

@@ -10,7 +10,7 @@ def parse_args():
     parser.add_argument('--b', '--batch_size', default=16, type=int)
     parser.add_argument('--epochs', default=40, type=int, metavar='N',
                         help='number of total epochs to run')    
-    parser.add_argument('-j', '--workers', default=20, type=int, metavar='N',
+    parser.add_argument('-j', '--workers', default=16, type=int, metavar='N',
                         help='number of data loading workers (default: 16)')
     parser.add_argument('--lr', default=0.02, type=float, help='initial learning rate')
     parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
@@ -25,7 +25,7 @@ def parse_args():
     parser.add_argument('--resume', default='', help='resume from checkpoint')
     parser.add_argument('--test_only', default=False, type=bool, help='resume from checkpoint')
     parser.add_argument('--output-dir', default='./result', help='path where to save')
-    parser.add_argument('--aspect-ratio-group-factor', default=0, type=int)
+    parser.add_argument('--aspect-ratio-group-factor', default=3, type=int)
     parser.add_argument(
         "--pretrained",
         dest="pretrained",
@@ -33,9 +33,9 @@ def parse_args():
         action="store_true",
     )
     parser.add_argument('--distributed', default=True, help='if distribute or not')
-    parser.add_argument('--parallel', default=False, help='if distribute or not')
+    parser.add_argument('--parallel', default=True, help='if distribute or not')
     # distributed training parameters
-    parser.add_argument('--world-size', default=1, type=int,
+    parser.add_argument('--world-size', default=3, type=int,
                         help='number of distributed processes')
     parser.add_argument('--dist-url', default='env://', help='url used to set up distributed training')
 
