@@ -87,7 +87,7 @@ def evaluate(model, data_loader, device):
         model_time = time.time()
         outputs = model(image)
 
-        outputs = [{k: v.to(cpu_device) for k, v in t.imtes()} for t in targets]
+        outputs = [{k: v.to(cpu_device) for k, v in t.items()} for t in targets]
         model_time = time.time() - model_time
 
         res = {target["image_id"].item(): output for target, output in zip(targets, outputs)}
