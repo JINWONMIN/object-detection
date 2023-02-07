@@ -111,8 +111,32 @@ class YOLODetector:
             confidences (tensor): objectness confidences for each detected box, sized [n_boxes].
             class_scores (tensor): scores for most likely class for each detected box, sized [n_boxes].
         """
-        pass
-    
+        S, B, C = self.S, self.B, self.C
+        boxes, labels, confidences, class_scores = [], [], [], []
+        
+        cell_size = 1.0 / float(S)
+        
+        # torch.unsqueeze() : Add a 1D to a specific location
+        conf = pred_tensor[:, :, 4].unsqueeze(2)    # [S, S, 1]
+        for b in range(1, B):
+            conf = torch.cat((conf, pred_tensor[:, :, 5*b + 4].unsqueeze(2)), 2)
+        conf_mask = conf > self.conf_thresh     # [S, S, B]
+
+        # TBM, further optimization may be possible by replacing the following for-loops with tensor operations.
+        for i in range(S):  # for x-dimension
+            for j in range(S):  # for y-dimension
+                class_score, class_label = torch.max(pred_tensor[j, i, 5*B:], 0)
+
+                for b in range(B):
+                    conf = pred_tensor[j, i, 5*b + 4]
+                    prob = conf * class_score
+                    if float(prob) < self.prob_thresh:
+                        continue
+                    
+                    # Compute box corner (x1, y1, x2, y2) from tensor
+                    box = pred_tensor[j, i, 5*b : 5*b + 4]  # [x1, y1, x2, y2] for detector each grid cell
+                    x0y0_normalized = torch.FloatTensor([i, j]) * cell_size # 
+
     def nms(self, boxes, scores):
         """Apply non maximum supression.
 
