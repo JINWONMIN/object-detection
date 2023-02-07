@@ -97,8 +97,41 @@ class YOLODetector:
             mask = (class_labels_all == class_label)
             if torch.sum(mask) == 0:
                 continue    # if no box found, skip that class
-        
             
+            boxes_normalized_masked = boxes_normalized_all[mask]
+            class_labels_masked = class_labels_all[mask]
+            confidences_masked = confidences_all[mask]
+            class_scores_masked = class_scores_all[mask]
+
+            ids = self.nms(boxes_normalized_masked, confidences_masked)
+
+            boxes_normalized.append(boxes_normalized_masked[ids])
+            class_labels.append(class_labels_masked[ids])
+            probs.append(confidences_masked[ids] * class_scores_masked[ids])
+
+        boxes_normalized = torch.cat(boxes_normalized, 0)
+        class_labels = torch.cat(class_labels, 0)
+        probs = torch.cat(probs, 0)
+
+        # Postprocess for box, labels, probs.
+        boxes_detected, class_names_detected, probs_detected = [], [], []
+        for b in range(boxes_normalized.size(0)):
+            box_normalized = boxes_normalized[b]
+            class_label = class_labels[b]
+            prob = probs[b]
+
+            x1, x2 = w * box_normalized[0], w * box_normalized[2] # unnormalize x with image width.
+            y1, y2 = h * box_normalized[1], h * box_normalized[3] # unnormalize y with image height.
+            boxes_detected.append(((x1, y1), (x2, y2)))
+
+            class_label = int(class_label) # convert from LongTensor to int.
+            class_name = self.class_name_list[class_label]
+            class_names_detected.append(class_name)
+
+            prob = float(prob) # convert from Tensor to float.
+            probs_detected.append(prob)
+
+        return boxes_detected, class_names_detected, probs_detected
         
     def decode(self, pred_tensor):
         """ Decode tensor into box coordinates, class labels, and probs_detected.
@@ -135,7 +168,32 @@ class YOLODetector:
                     
                     # Compute box corner (x1, y1, x2, y2) from tensor
                     box = pred_tensor[j, i, 5*b : 5*b + 4]  # [x1, y1, x2, y2] for detector each grid cell
-                    x0y0_normalized = torch.FloatTensor([i, j]) * cell_size # 
+                    x0y0_normalized = torch.FloatTensor([i, j]) * cell_size # cell left-top corner. Normalized from 0.0 to 1.0 w.r.t. image width/height/
+                    xy_normalized = box[:2] * cell_size + x0y0_normalized   # box center. Normalized from 0.0 to 1.0 w.r.t. image width/height
+                    wh_normalized = box[2:] # box width and height. Normalized from 0.0 to 1.0 w.r.t. image width/height.
+                    box_xyxy = torch.FloatTensor(4) # [4, ]
+                    box_xyxy[:2] = xy_normalized - 0.5 * wh_normalized  # left-top corner (x1, y1)
+                    box_xyxy[2:] = xy_normalized + 0.5 * wh_normalized  # right-bottom corner (x2, y2)
+
+                    # Append result to the lists.
+                    boxes.append(box_xyxy)
+                    labels.append(class_label)
+                    confidences.append(conf)
+                    class_scores.append(class_score)
+
+        if len(boxes) > 0:
+            boxes = torch.stack(boxes, 0)   # [n_boxes, 4]
+            labels = torch.stack(labels, 0) # [n_boxes, ]
+            confidences = torch.stack(confidences, 0)   # [n_boxes, ]
+            class_scores = torch.stack(class_scores, 0) # [n_boxes, ]
+        else:
+            # If no box found, return empty tensors.
+            boxes = torch.FloatTensor(0, 4)
+            labels = torch.LongTensor(0)
+            confidences = torch.FloatTensor(0)
+            class_scores = torch.FloatTensor(0)
+
+        return boxes, labels, confidences, class_scores
 
     def nms(self, boxes, scores):
         """Apply non maximum supression.
