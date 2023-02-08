@@ -132,7 +132,7 @@ class YOLODetector:
             probs_detected.append(prob)
 
         return boxes_detected, class_names_detected, probs_detected
-        
+
     def decode(self, pred_tensor):
         """ Decode tensor into box coordinates, class labels, and probs_detected.
 
@@ -242,6 +242,33 @@ class YOLODetector:
             ids_sorted = ids_sorted[ids_keep + 1]   # '+1' is needed because 'ids_sorted[0] = i'.
         
         return torch.LongTensor(ids)
+            
+def visualize_boxes(image_bgr, boxes, class_names, probs, name_bgr_dict=None, line_thickness=2):
+    if name_bgr_dict is None:
+        name_bgr_dict = VOC_CLASS_BGR
+        
+    image_boxes = image_bgr.copy()
+    for box, class_name, prob in zip(boxes, class_names, probs):
+        # Draw box on the image.
+        left_top, right_bottom = box
+        left, top = int(left_top[0]), int(left_top[1])
+        right, bottom = int(right_bottom[0]), int(right_bottom[1])
+        bgr = name_bgr_dict[class_name]
+        cv2.rectangle(image_boxes, (left, top), (right, bottom), bgr, thickness=line_thickness)
+
+        # Draw text on the image.
+        text = '%s %.2f' % (class_name, prob)
+        size, baseline = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, thickness=2)
+        text_w, text_h = size
+        
+        x, y = left, top
+        x1y1 = (x, y)
+        x2y2 = (x + text_w + line_thickness, y + text_h + line_thickness + baseline)
+        cv2.rectangle(image_boxes, x1y1, x2y2, bgr, -1)
+        cv2.putText(image_boxes, text, (x + line_thickness, y + 2*baseline + line_thickness),
+                    cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.4, color=(255, 255, 255), thickness=1, lineType=8)
+
+    return image_boxes
             
 # VOC class names and BGR color.
 VOC_CLASS_BGR = {
