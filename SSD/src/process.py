@@ -61,23 +61,25 @@ def evaluate(model, test_loader, epoch, writer, encoder, nms_threshold):
             ploc, plabel = model(img)   # prediction 한 정보를 얻는다.
             ploc, plabel = ploc.float(), plabel.float() # prediction한 loc와 label을 float로 변환
 
-            for idx in range(ploc.shape[0]):    
-                ploc_i = ploc[idx, :, :].unsqueeze(0)
-                plabel_i = plabel[idx, :, :].unsqueeze(0)
+            for idx in range(ploc.shape[0]):    # loop로 배치의 인덱스를 얻는다.       
+                # prediciton 한 loc 과 label을 batch idx에 따라서 분리해준다.
+                ploc_i = ploc[idx, :, :].unsqueeze(0)   # [1, idx, :, :]
+                plabel_i = plabel[idx, :, :].unsqueeze(0)   # [1, idx, :, :]
                 try:
-                    result = encoder.decode_batch(ploc_i, plabel_i, nms_threshold, 200)[0]
+                    result = encoder.decode_batch(ploc_i, plabel_i, nms_threshold, 200)[0]  # nms 프로세스 수행 (util.py 파일에 encoder 클래스 메서드 확인.)
                 except:
                     print("No object detected in idx: {}".format(idx))
                     continue
-
-                height, width = img_size[idx]
-                loc, label, prob = [r.cpu().numpy() for r in result]
+                
+                # SSD 는 고정된 이미지가 들어가기 때문에 원본 이미지의 크기로 box의 location을 추정해야한다.
+                height, width = img_size[idx]   # batch size에 따라서 image size를 불러온다.
+                loc, label, prob = [r.cpu().numpy() for r in result]    
                 for loc_, label_, prob_ in zip(loc, label, prob):
                     detections.append([img_id[idx], loc_[0] * width, loc_[1] * height, (loc_[2] - loc_[0]) * width,
                                        (loc_[3] - loc_[1]) * height, prob_,
-                                       category_ids[label_ - 1]])
+                                       category_ids[label_ - 1]])   # x,y,w,h 에 원본 이미지의 width, height를 곱하여 원본 이미지 좌표를 추정.
 
-    detections = np.array(detections, dtype=np.float32)
+    detections = np.array(detections, dtype=np.float32) # 추가한 detection list를 데이터 타입이 넘파이 float32인 numpy 배열로 변환
 
     coco_eval = COCOeval(test_loader.dataset.coco, test_loader.dataset.coco.loadRes(detections), iouType="bbox")
     coco_eval.evaluate()
