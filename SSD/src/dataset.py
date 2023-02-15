@@ -51,7 +51,7 @@ class CocoDataset(CocoDetection):   # CocoDetection 상속
             return None, None, None, None, None
         for annotation in target:
             bbox = annotation.get("bbox")   # box 정보 할당
-            boxes.append([bbox[0] / width, bbox[1] / height, (bbox[0] + bbox[2]) / width, (bbox[1] + bbox[3]) / height])    # box 좌표 decode (normalize)
+            boxes.append([bbox[0] / width, bbox[1] / height, (bbox[0] + bbox[2]) / width, (bbox[1] + bbox[3]) / height])    # box 좌표 encode (normalize)
             labels.append(self.label_map[annotation.get("category_id")])    # category id 추가
         boxes = torch.tensor(boxes) # bboxes 텐서로 변환
         labels = torch.tensor(labels)   # category id list to tensor
