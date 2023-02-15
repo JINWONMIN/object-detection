@@ -49,7 +49,7 @@ class ResNet(nn.Module):
 
 
 # SSD의 backbone으로 ResNet을 사용.
-class SSD(Base):
+class SSD(Base):    # Base class를 상속. --> (weights를 초기화 시키기 위해서.)
     def __init__(self, backbone=ResNet(), num_classes=81):
         super().__init__()
 
@@ -57,13 +57,14 @@ class SSD(Base):
                                             # 논문에서 backbone으로 VGG16을 사용하였으나 backbone은 자유롭게 바꿀 수 있으므로 ResNet 사용해도 무방함.
         self.num_classes = num_classes  # class 개수 설정. (default=81개) --> dataset에 따라 달라짐.   
         self._build_additional_features(self.feature_extractor.out_channels)    # feaure extractor의 out channels를 받아와서, input channel로 사용함.
-                                                                                # 추가적이 feature 를 계산함. 
-        self.num_defaults = [4, 6, 6, 6, 4, 4]
-        self.loc = []
-        self.conf = []
+                                                                                # Extra feature layers 를 뽑아내기 위해서 사용함.
+        self.num_defaults = [4, 6, 6, 6, 4, 4]  # default box 개수 설정
+        self.loc = []   # coords
+        self.conf = []  # 각 클래스별 confidences
 
+        # Extra Feature Layers
         for nd, oc in zip(self.num_defaults, self.feature_extractor.out_channels):
-            self.loc.append(nn.Conv2d(oc, nd * 4, kernel_size=3, padding=1))
+            self.loc.append(nn.Conv2d(oc, nd * 4, kernel_size=3, padding=1))    
             self.conf.append(nn.Conv2d(oc, nd * self.num_classes, kernel_size=3, padding=1))
 
         self.loc = nn.ModuleList(self.loc)
