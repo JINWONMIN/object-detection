@@ -81,9 +81,10 @@ def evaluate(model, test_loader, epoch, writer, encoder, nms_threshold):
 
     detections = np.array(detections, dtype=np.float32) # 추가한 detection list를 데이터 타입이 넘파이 float32인 numpy 배열로 변환
 
-    coco_eval = COCOeval(test_loader.dataset.coco, test_loader.dataset.coco.loadRes(detections), iouType="bbox")
-    coco_eval.evaluate()
-    coco_eval.accumulate()
-    coco_eval.summarize()
+    # detection list를 갖고 pycocotools.cocoeval 의 COCOeval 클래스를 활용해서 평가를 진행.
+    coco_eval = COCOeval(test_loader.dataset.coco, test_loader.dataset.coco.loadRes(detections), iouType="bbox")    # COCOeval type 인스턴스 생성
+    coco_eval.evaluate()    # 평가 수행
+    coco_eval.accumulate()  # 수행 결과 모으기
+    coco_eval.summarize()   # 수행 결과 요약
 
-    writer.add_scalar("Test/mAP", coco_eval.stats[0], epoch)
+    writer.add_scalar("Test/mAP", coco_eval.stats[0], epoch)    # epoch 마다 mAP를 tensorboard에 추가.
