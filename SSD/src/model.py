@@ -12,8 +12,9 @@ class Base(nn.Module):
     def __init__(self):
         super().__init__()  # nn.Module 을 상속
 
+    # weights를 초기화 해준다.
     def init_weights(self):
-        layers = [*self.additional_blocks, *self.loc, *self.conf]   
+        layers = [*self.additional_blocks, *self.loc, *self.conf]   # *args 문법은 모든 길이의 인수 리스트에 접근하는 데 사용됨.
         for layer in layers:
             for param in layer.parameters():
                 if param.dim() > 1:
@@ -52,9 +53,11 @@ class SSD(Base):
     def __init__(self, backbone=ResNet(), num_classes=81):
         super().__init__()
 
-        self.feature_extractor = backbone
-        self.num_classes = num_classes
-        self._build_additional_features(self.feature_extractor.out_channels)
+        self.feature_extractor = backbone   # backbone 을 feature extractor로 사용. (default=ResNet)
+                                            # 논문에서 backbone으로 VGG16을 사용하였으나 backbone은 자유롭게 바꿀 수 있으므로 ResNet 사용해도 무방함.
+        self.num_classes = num_classes  # class 개수 설정. (default=81개) --> dataset에 따라 달라짐.   
+        self._build_additional_features(self.feature_extractor.out_channels)    # feaure extractor의 out channels를 받아와서, input channel로 사용함.
+                                                                                # 추가적이 feature 를 계산함. 
         self.num_defaults = [4, 6, 6, 6, 4, 4]
         self.loc = []
         self.conf = []
@@ -68,18 +71,22 @@ class SSD(Base):
         self.init_weights()
 
     def _build_additional_features(self, input_size):
+        # feature extractor의 output channels을 input size로 받음.
         self.additional_blocks = []
         for i, (input_size, output_size, channels) in enumerate(
-                zip(input_size[:-1], input_size[1:], [256, 256, 128, 128, 128])):
+                zip(input_size[:-1], input_size[1:], [256, 256, 128, 128, 128])):   # i layer의 (input size, output size, channels) 값 할당 
+            
+            # 3 idx layer 전까지는 feature map을 반으로 줄이면서 계산하고
             if i < 3:
                 layer = nn.Sequential(
                     nn.Conv2d(input_size, channels, kernel_size=1, bias=False),
                     nn.BatchNorm2d(channels),
                     nn.ReLU(inplace=True),
-                    nn.Conv2d(channels, output_size, kernel_size=3, padding=1, stride=2, bias=False),
+                    nn.Conv2d(channels, output_size, kernel_size=3, padding=1, stride=2, bias=False),   # stride=2, padding=1 로 feature map을 반으로 줄임.
                     nn.BatchNorm2d(output_size),
                     nn.ReLU(inplace=True),
                 )
+            # 그 이후에는 feature map을 줄이지 않고 계산한다.
             else:
                 layer = nn.Sequential(
                     nn.Conv2d(input_size, channels, kernel_size=1, bias=False),
@@ -90,7 +97,7 @@ class SSD(Base):
                     nn.ReLU(inplace=True),
                 )
 
-            self.additional_blocks.append(layer)
+            self.additional_blocks.append(layer)    
 
         self.additional_blocks = nn.ModuleList(self.additional_blocks)
 
