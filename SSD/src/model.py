@@ -20,13 +20,15 @@ class Base(nn.Module):
                 if param.dim() > 1:
                     nn.init.xavier_uniform_(param)
 
-    def bbox_view(self, src, loc, conf):
+    def bbox_view(self, src, loc, conf):    # src = feature들의 합, loc, conf 레이어들 
         ret = []
-        for s, l, c in zip(src, loc, conf):
+        for s, l, c in zip(src, loc, conf): # l = 3x3 conv
+            # l(s)view(s.size(0), 4, -1): view(batch size, coords, num of anchor box)
+            # l(s) = location에 대한 feature를 통과, s.size(0) = batch size를 의미
             ret.append((l(s).view(s.size(0), 4, -1), c(s).view(s.size(0), self.num_classes, -1)))
 
-        locs, confs = list(zip(*ret))
-        locs, confs = torch.cat(locs, 2).contiguous(), torch.cat(confs, 2).contiguous()
+        locs, confs = list(zip(*ret))   # zip list 후 locs confs 로 구분
+        locs, confs = torch.cat(locs, 2).contiguous(), torch.cat(confs, 2).contiguous() # locs [[], []] -> [] , confs [[], []] -> []
         return locs, confs
 
 
@@ -58,14 +60,14 @@ class SSD(Base):    # Base class를 상속. --> (weights를 초기화 시키기 
         self.num_classes = num_classes  # class 개수 설정. (default=81개) --> dataset에 따라 달라짐.   
         self._build_additional_features(self.feature_extractor.out_channels)    # feaure extractor의 out channels를 받아와서, input channel로 사용함.
                                                                                 # Extra feature layers 를 뽑아내기 위해서 사용함.
-        self.num_defaults = [4, 6, 6, 6, 4, 4]  # default box 개수 설정
+        self.num_defaults = [4, 6, 6, 6, 4, 4]  # default anchor box 개수 설정
         self.loc = []   # coords
-        self.conf = []  # 각 클래스별 confidences
+        self.conf = []  # confidences
 
         # Extra Feature Layers
-        for nd, oc in zip(self.num_defaults, self.feature_extractor.out_channels):
-            self.loc.append(nn.Conv2d(oc, nd * 4, kernel_size=3, padding=1))    
-            self.conf.append(nn.Conv2d(oc, nd * self.num_classes, kernel_size=3, padding=1))
+        for nd, oc in zip(self.num_defaults, self.feature_extractor.out_channels):  
+            self.loc.append(nn.Conv2d(oc, nd * 4, kernel_size=3, padding=1))    # nd * default anchors box 개수   
+            self.conf.append(nn.Conv2d(oc, nd * self.num_classes, kernel_size=3, padding=1))    # nd * num classes : 각 클래스별 confidece
 
         self.loc = nn.ModuleList(self.loc)
         self.conf = nn.ModuleList(self.conf)
@@ -104,11 +106,11 @@ class SSD(Base):    # Base class를 상속. --> (weights를 초기화 시키기 
 
 
     def forward(self, x):
-        x = self.feature_extractor(x)
-        detection_feed = [x]
-        for l in self.additional_blocks:
-            x = l(x)
-            detection_feed.append(x)
+        x = self.feature_extractor(x)   # backbone 에서 children() 으로 불러온 extractor
+        detection_feed = [x]    
+        for l in self.additional_blocks:   # additional block 하나를 layer로 놓음.
+            x = l(x)    # layer 하나를 통과한 feature x를
+            detection_feed.append(x)    # detection feed에 추가
         locs, confs = self.bbox_view(detection_feed, self.loc, self.conf)
         return locs, confs
 
@@ -116,6 +118,7 @@ class SSD(Base):    # Base class를 상속. --> (weights를 초기화 시키기 
 feature_maps = {}
 
 
+# MobileNetV2 backbone
 class MobileNetV2(nn.Module):
     def __init__(self):
         super().__init__()
