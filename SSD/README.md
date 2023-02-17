@@ -5,7 +5,7 @@
 ### Introduction
 
 - **paper**: [SSD: Single Shot MultiBox Detector](https://arxiv.org/pdf/1512.02325.pdf)
-- backbone으로 **SSD-ResNet50** 과 **SSDLite-MobileNetV2** 을 사용하는 파이썬 코드.
+- backbone으로 **SSD-ResNet50** 과 **SSDLite-MobileNetV2** 을 사용하는 파이토치 코드.
 - apex.amp를 사용하여 학습. (mixed precision training)
 
 ---
