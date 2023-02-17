@@ -210,13 +210,14 @@ class DefaultBoxes(object):
 
 
 def generate_dboxes(model="ssd"):
+    # 논문 구조를 그대로 따라 가는 듯?
     if model == "ssd":
-        figsize = 300
-        feat_size = [38, 19, 10, 5, 3, 1]
-        steps = [8, 16, 32, 64, 100, 300]
-        scales = [21, 45, 99, 153, 207, 261, 315]
-        aspect_ratios = [[2], [2, 3], [2, 3], [2, 3], [2], [2]]
-        dboxes = DefaultBoxes(figsize, feat_size, steps, scales, aspect_ratios)
+        figsize = 300   # input 입력 사이즈
+        feat_size = [38, 19, 10, 5, 3, 1]   # feature resolution
+        steps = [8, 16, 32, 64, 100, 300]   # 대략 figsize / feat_size
+        scales = [21, 45, 99, 153, 207, 261, 315]   # 각 feature 들에서 defaultbox의 크기를 스케일하는 값들 (hyper parameter로 조정한 것)
+        aspect_ratios = [[2], [2, 3], [2, 3], [2, 3], [2], [2]]     
+        dboxes = DefaultBoxes(figsize, feat_size, steps, scales, aspect_ratios) # defaultboxes 계산 return
     else:  # "ssdlite"
         figsize = 300
         feat_size = [19, 10, 5, 3, 2, 1]

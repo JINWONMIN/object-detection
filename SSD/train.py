@@ -57,12 +57,14 @@ def main(opt):
     if torch.cuda.is_available():
         torch.distributed.init_process_group(backend='nccl', init_method='env://')
         num_gpus = torch.distributed.get_world_size()
+    # parameter initialize 및 batch sampling 등 랜덤하게 값이 들어가는데 값이 달라지면 성능의 차이가 발생할 수 있으므로,
+    # 이를 고정해주기 위해 seed 넘버를 부여    
         torch.cuda.manual_seed(123)
     else:
-        torch.manual_seed(123)
+        torch.manual_seed(123) 
         num_gpus = 1
 
-    train_params = {"batch_size": opt.batch_size * num_gpus,
+    train_params = {"batch_size": opt.batch_size * num_gpus,    # gpu 1개당 배치 정의 후 gpu 추가하는 방식인듯
                     "shuffle": True,
                     "drop_last": False,
                     "num_workers": opt.num_workers,
@@ -87,7 +89,7 @@ def main(opt):
 
     encoder = Encoder(dboxes)
 
-    opt.lr = opt.lr * num_gpus * (opt.batch_size / 32)
+    opt.lr = opt.lr * num_gpus * (opt.batch_size / 32)  # batch size가 커질수록 lr를 조정하기 위해 gpu와 배치사이즈를 곱해줌.
     criterion = Loss(dboxes)
 
     optimizer = torch.optim.SGD(model.parameters(), lr=opt.lr, momentum=opt.momentum,

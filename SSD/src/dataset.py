@@ -20,7 +20,7 @@ def collate_fn(batch):
     return items
 
 
-class CocoDataset(CocoDetection):   # CocoDetection 상속
+class CocoDataset(CocoDetection):   # CocoDetection 상속 받아서 CocoDataset을 정의
     def __init__(self, root, year, mode, transform=None):   
         annFile = os.path.join(root, "annotations", "instances_{}{}.json".format(mode, year))   
         root = os.path.join(root, "{}{}".format(mode, year))
@@ -44,7 +44,7 @@ class CocoDataset(CocoDetection):   # CocoDetection 상속
 
     def __getitem__(self, item):
         image, target = super(CocoDataset, self).__getitem__(item)  
-        width, height = image.size
+        width, height = image.size  
         boxes = []
         labels = []
         if len(target) == 0:    # annotation이 존재하지 않으면 None

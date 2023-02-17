@@ -109,7 +109,7 @@ class SSDTransformer(object):
         self.size = size
         self.val = val
         self.dboxes = dboxes
-        self.encoder = Encoder(self.dboxes)
+        self.encoder = Encoder(self.dboxes) 
         self.crop = SSDCropping()
 
         self.hflip = RandomHorizontalFlip()
